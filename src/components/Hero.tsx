@@ -1,9 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Target, Zap, Upload, FileText, Calendar } from "lucide-react";
+import { Brain, Target, Zap, Upload, FileText, Calendar, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Link } from "react-router-dom";
 
 export const Hero = () => {
+  const { user, signOut } = useAuth();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* Navigation */}
@@ -20,8 +24,26 @@ export const Hero = () => {
           <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
         </div>
         <div className="flex items-center space-x-4">
-          <Button variant="ghost">Sign In</Button>
-          <Button variant="hero">Get Started</Button>
+          {user ? (
+            <>
+              <span className="text-sm text-muted-foreground hidden sm:block">
+                Welcome, {user.email}
+              </span>
+              <Button variant="ghost" onClick={signOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" asChild>
+                <Link to="/signin">Sign In</Link>
+              </Button>
+              <Button variant="hero" asChild>
+                <Link to="/signin">Get Started</Link>
+              </Button>
+            </>
+          )}
         </div>
       </nav>
 

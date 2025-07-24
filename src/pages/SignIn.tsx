@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,14 +7,24 @@ import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const SignIn = () => {
+  const { user } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +63,48 @@ const SignIn = () => {
     }
   };
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "Sign up failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.user) {
+        toast({
+          title: "Account created!",
+          description: "Please check your email to confirm your account.",
+        });
+        // Don't redirect immediately, let them know to check email
+      }
+    } catch (error) {
+      toast({
+        title: "Something went wrong", 
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
@@ -72,15 +124,20 @@ const SignIn = () => {
               <div className="w-6 h-6 rounded bg-primary-foreground/20" />
             </div>
             <div>
-              <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+              <CardTitle className="text-2xl font-bold">
+                {isSignUp ? "Create account" : "Welcome back"}
+              </CardTitle>
               <CardDescription className="text-muted-foreground">
-                Sign in to your SmartApply account
+                {isSignUp 
+                  ? "Sign up for your SmartApply account" 
+                  : "Sign in to your SmartApply account"
+                }
               </CardDescription>
             </div>
           </CardHeader>
 
           <CardContent className="space-y-6">
-            <form onSubmit={handleSignIn} className="space-y-4">
+            <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
               {/* Email field */}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -103,9 +160,11 @@ const SignIn = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <Label htmlFor="password">Password</Label>
-                  <Link to="/forgot-password" className="text-sm text-primary hover:text-primary/80 transition-colors">
-                    Forgot password?
-                  </Link>
+                  {!isSignUp && (
+                    <Link to="/forgot-password" className="text-sm text-primary hover:text-primary/80 transition-colors">
+                      Forgot password?
+                    </Link>
+                  )}
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -130,7 +189,7 @@ const SignIn = () => {
                 </div>
               </div>
 
-              {/* Sign in button */}
+              {/* Auth button */}
               <Button 
                 type="submit" 
                 variant="hero" 
@@ -138,7 +197,10 @@ const SignIn = () => {
                 size="lg"
                 disabled={isLoading}
               >
-                {isLoading ? "Signing in..." : "Sign in"}
+                {isLoading 
+                  ? (isSignUp ? "Creating account..." : "Signing in...") 
+                  : (isSignUp ? "Create account" : "Sign in")
+                }
               </Button>
             </form>
 
@@ -171,12 +233,19 @@ const SignIn = () => {
               </Button>
             </div>
 
-            {/* Sign up link */}
+            {/* Toggle between sign in/sign up */}
             <div className="text-center">
-              <span className="text-muted-foreground">Don't have an account? </span>
-              <Link to="/signup" className="text-primary hover:text-primary/80 transition-colors font-medium">
-                Sign up
-              </Link>
+              <span className="text-muted-foreground">
+                {isSignUp ? "Already have an account? " : "Don't have an account? "}
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-primary hover:text-primary/80 transition-colors font-medium"
+                disabled={isLoading}
+              >
+                {isSignUp ? "Sign in" : "Sign up"}
+              </button>
             </div>
           </CardContent>
         </Card>
