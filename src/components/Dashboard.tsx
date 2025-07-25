@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Briefcase, CheckCircle, Clock, TrendingUp, MapPin, DollarSign } from "lucide-react";
+import { ResumeUpload } from "./ResumeUpload";
 
 export const Dashboard = () => {
   const jobApplications = [
@@ -191,14 +192,13 @@ export const Dashboard = () => {
               </CardContent>
             </Card>
 
+            <ResumeUpload />
+
             <Card className="border-border/50">
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full" variant="default">
-                  Upload New Resume
-                </Button>
                 <Button className="w-full" variant="outline">
                   Update Preferences
                 </Button>
